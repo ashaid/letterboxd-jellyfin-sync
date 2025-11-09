@@ -63,7 +63,7 @@ func (jc *JellyfinClient) getAccessToken() (string, string) {
 	return accessToken, userId
 }
 
-func (jc *JellyfinClient) getMovies(accessToken string, userId string) {
+func (jc *JellyfinClient) getMovies(accessToken string, userId string) types.ItemsResponse {
 	endpoint := fmt.Sprintf("%s/Users/%s/Items", jc.BaseURL, userId)
 
 	params := url.Values{}
@@ -73,7 +73,7 @@ func (jc *JellyfinClient) getMovies(accessToken string, userId string) {
 	params.Add("Recursive", "true")
 
 	fullURL := fmt.Sprintf("%s?%s", endpoint, params.Encode())
-	fmt.Print(fullURL)
+
 	req, err := http.NewRequest("GET", fullURL, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -97,9 +97,24 @@ func (jc *JellyfinClient) getMovies(accessToken string, userId string) {
 	if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
 		log.Fatal(err)
 	}
+
+	return result
 }
 
-func InvokeJellyfin() {
+func getUnwatchedMovies(movies types.ItemsResponse) []string {
+	// will make a slice big enough even if you've watched 0 movies
+	unwatchedMovies := make([]string, movies.TotalRecordCount)
+
+	for key, value := range movies.Items {
+		if !value.UserData.Played {
+			unwatchedMovies[key] = value.Name
+		}
+	}
+
+	return unwatchedMovies
+}
+
+func InvokeJellyfin() []string {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
@@ -114,6 +129,6 @@ func InvokeJellyfin() {
 
 	accessToken, userId := jc.getAccessToken()
 
-	jc.getMovies(accessToken, userId)
-
+	movies := jc.getMovies(accessToken, userId)
+	return getUnwatchedMovies(movies)
 }

@@ -7,11 +7,9 @@ import (
 )
 
 func main() {
-	fmt.Println("Hello, World!")
 	// Get list of unwatched movies from jellyfin
-	internal.InvokeJellyfin()
-
-	// create query to get movies by unwatched by user
+	unwatchedMovies := internal.InvokeJellyfin()
+	fmt.Print(unwatchedMovies)
 
 	// Format into letterboxd csv
 	// (Optional) rank movies
