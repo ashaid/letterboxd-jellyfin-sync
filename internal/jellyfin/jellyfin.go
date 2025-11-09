@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 
 	"github.com/ashaid/letterboxd-jellyfin-sync/internal/jellyfin/types"
 	"github.com/joho/godotenv"
@@ -101,20 +102,19 @@ func (jc *JellyfinClient) getMovies(accessToken string, userId string) types.Ite
 	return result
 }
 
-func getUnwatchedMovies(movies types.ItemsResponse) []string {
-	// will make a slice big enough even if you've watched 0 movies
-	unwatchedMovies := make([]string, movies.TotalRecordCount)
+func getUnwatchedMovies(movies types.ItemsResponse) [][]string {
+	data := [][]string{{"Title", "Year"}}
 
-	for key, value := range movies.Items {
-		if !value.UserData.Played {
-			unwatchedMovies[key] = value.Name
+	for _, movie := range movies.Items {
+		if !movie.UserData.Played {
+			data = append(data, []string{movie.Name, strconv.Itoa(movie.PremiereDate.Year())})
 		}
 	}
 
-	return unwatchedMovies
+	return data
 }
 
-func InvokeJellyfin() []string {
+func GetUnwatchedMoviesInCSVFormat() [][]string {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")

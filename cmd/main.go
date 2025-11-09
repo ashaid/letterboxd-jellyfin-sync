@@ -1,17 +1,14 @@
 package main
 
 import (
-	"fmt"
-
-	internal "github.com/ashaid/letterboxd-jellyfin-sync/internal/jellyfin"
+	csv "github.com/ashaid/letterboxd-jellyfin-sync/internal/csv"
+	jf "github.com/ashaid/letterboxd-jellyfin-sync/internal/jellyfin"
 )
 
 func main() {
-	// Get list of unwatched movies from jellyfin
-	unwatchedMovies := internal.InvokeJellyfin()
-	fmt.Print(unwatchedMovies)
+	unwatchedMovies := jf.GetUnwatchedMoviesInCSVFormat()
 
-	// Format into letterboxd csv
+	csv.CreateCSVInLetterboxdFormat(unwatchedMovies)
 	// (Optional) rank movies
 	// Upload to leeterboxd as watch list
 }
