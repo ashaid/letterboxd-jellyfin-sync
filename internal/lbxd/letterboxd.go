@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"regexp"
 
 	"github.com/ashaid/letterboxd-jellyfin-sync/internal/lbxd/auth"
+	"github.com/ashaid/letterboxd-jellyfin-sync/internal/lbxd/films"
 	"github.com/ashaid/letterboxd-jellyfin-sync/internal/lbxd/utils"
 )
 
@@ -23,33 +23,25 @@ func Main() {
 	if err != nil {
 		log.Fatalf("Failed to retrieve unscoped token: %v", err)
 	}
-
 	fmt.Printf("Successfully retrieved unscoped token\n")
 
 	_, err = auth.GetAccessTokens(lbxd.BaseURL, lbxd.Client_Id, lbxd.Username, lbxd.Password, lbxd.Client_Secret, lbxd.Client)
 	if err != nil {
 		log.Fatalf("Failed to retrieve access tokens: %v", err)
 	}
-
 	fmt.Printf("Successfully retrieved access tokens\n")
 
-	simpleClient := utils.NewSimpleClient(
-		"https://letterboxd.com",
-	)
+	simpleClient := utils.NewSimpleClient("https://letterboxd.com")
 
-	body, err := simpleClient.Get("/film/" + "10-things-i-hate-about-you")
+	result, err := films.ProcessFilms("result.csv", simpleClient)
 	if err != nil {
-		log.Fatalf("Failed to retrieve film: %v", err)
+		log.Fatalf("Failed to process films: %v", err)
 	}
 
-	lidPattern := regexp.MustCompile(`"lid":\s*"([^"]+)"`)
-	matches := lidPattern.FindSubmatch(body)
-	if len(matches) < 2 {
-		log.Fatalf("Failed to find lid in response")
-	}
-
-	lid := string(matches[1])
-	fmt.Printf("Extracted LID: %s\n", lid)
+	fmt.Printf("\n=== Processing Summary ===\n")
+	fmt.Printf("Total films processed: %d\n", result.TotalProcessed)
+	fmt.Printf("Successful: %d\n", len(result.SuccessfulFilms))
+	fmt.Printf("Failed: %d\n", len(result.FailedFilms))
 
 	// lbxd.uploadAsWatchList()
 }
