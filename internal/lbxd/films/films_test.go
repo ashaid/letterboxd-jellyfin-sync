@@ -30,8 +30,11 @@ func TestUploadWatchlist(t *testing.T) {
 		t.Fatalf("Failed to get tokens: %v", err)
 	}
 
-	err = UploadAsWatchlist(lbxd.BaseURL, &http.Client{}, tokens, films)
+	listResponse, statusCode, err := UploadAsWatchlist("https://letterboxd.com", &http.Client{}, tokens, films)
 	if err != nil {
 		t.Fatalf("Failed to upload: %v", err)
 	}
+
+	t.Logf("Status Code: %d", statusCode)
+	t.Logf("Response: %+v", listResponse)
 }

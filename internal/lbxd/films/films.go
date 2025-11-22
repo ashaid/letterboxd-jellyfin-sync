@@ -2,7 +2,9 @@ package films
 
 import (
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -217,7 +219,7 @@ func ProcessFilms(inputCSV string, simpleClient *utils.SimpleClient) (*Processin
 	}, nil
 }
 
-func UploadAsWatchlist(baseURL string, httpClient *http.Client, tokens *types.TokenResponse, films []Film) error {
+func UploadAsWatchlist(baseURL string, httpClient *http.Client, tokens *types.TokenResponse, films []Film) (*types.ListResponse, int, error) {
 	endpoint := "/s/update-list"
 	requestURL := baseURL + endpoint
 
@@ -232,9 +234,30 @@ func UploadAsWatchlist(baseURL string, httpClient *http.Client, tokens *types.To
 	formData.Set("filmListId", "0")
 	formData.Set("update", updatePayload)
 
-	req, _ := http.NewRequest("POST", requestURL, strings.NewReader(formData.Encode()))
+	req, err := http.NewRequest("POST", requestURL, strings.NewReader(formData.Encode()))
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to create request: %w", err)
+	}
+
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
 	req.Header.Set("Authorization", "Bearer "+tokens.AccessToken)
+	utils.SetAPIHeaders(req)
 
-	return nil
+	res, err := httpClient.Do(req)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to execute request: %w", err)
+	}
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, res.StatusCode, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	var listResponse types.ListResponse
+	if err := json.Unmarshal(body, &listResponse); err != nil {
+		return nil, res.StatusCode, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return &listResponse, res.StatusCode, nil
 }
