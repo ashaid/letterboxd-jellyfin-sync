@@ -3,11 +3,14 @@ package films
 import (
 	"encoding/csv"
 	"fmt"
+	"net/http"
+	"net/url"
 	"os"
 	"regexp"
 	"strings"
 	"unicode"
 
+	"github.com/ashaid/letterboxd-jellyfin-sync/internal/lbxd/types"
 	"github.com/ashaid/letterboxd-jellyfin-sync/internal/lbxd/utils"
 	"golang.org/x/text/runes"
 	"golang.org/x/text/transform"
@@ -210,4 +213,26 @@ func ProcessFilms(inputCSV string, simpleClient *utils.SimpleClient) (*Processin
 		FailedFilms:     failedFilms,
 		TotalProcessed:  len(filmsList),
 	}, nil
+}
+
+func UploadAsWatchlist(baseURL string, httpClient *http.Client, tokens *types.TokenResponse, films []Film) error {
+	endpoint := "/s/update-list"
+	requestURL := baseURL + endpoint
+
+	lids := make([]string, 0, len(films))
+	for _, film := range films {
+		lids = append(lids, film.LID)
+	}
+
+	updatePayload := utils.BuildWatchlistPayload(lids)
+
+	formData := url.Values{}
+	formData.Set("filmListId", "0")
+	formData.Set("update", updatePayload)
+
+	req, _ := http.NewRequest("POST", requestURL, strings.NewReader(formData.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+	req.Header.Set("Authorization", "Bearer "+tokens.AccessToken)
+
+	return nil
 }

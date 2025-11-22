@@ -25,7 +25,7 @@ func Main() {
 	}
 	fmt.Printf("Successfully retrieved unscoped token\n")
 
-	_, err = auth.GetAccessTokens(lbxd.BaseURL, lbxd.Client_Id, lbxd.Username, lbxd.Password, lbxd.Client_Secret, lbxd.Client)
+	tokens, err := auth.GetAccessTokens(lbxd.BaseURL, lbxd.Client_Id, lbxd.Username, lbxd.Password, lbxd.Client_Secret, lbxd.Client)
 	if err != nil {
 		log.Fatalf("Failed to retrieve access tokens: %v", err)
 	}
@@ -43,5 +43,5 @@ func Main() {
 	fmt.Printf("Successful: %d\n", len(result.SuccessfulFilms))
 	fmt.Printf("Failed: %d\n", len(result.FailedFilms))
 
-	// lbxd.uploadAsWatchList()
+	films.UploadAsWatchlist(lbxd.BaseURL, lbxd.Client, tokens, result.SuccessfulFilms)
 }

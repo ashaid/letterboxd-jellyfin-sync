@@ -1,0 +1,35 @@
+package films
+
+import (
+	"net/http"
+	"os"
+	"testing"
+
+	"github.com/ashaid/letterboxd-jellyfin-sync/internal/lbxd/auth"
+	"github.com/ashaid/letterboxd-jellyfin-sync/internal/lbxd/utils"
+)
+
+func TestUploadWatchlist(t *testing.T) {
+	films, err := ReadFilmsFromCSV("../../../films_with_lids.csv")
+	if err != nil {
+		t.Fatalf("Failed to read CSV: %v", err)
+	}
+
+	lbxd := utils.NewLbxdClient(
+		"https://letterboxd.com",
+		os.Getenv("LBXD_USER_NAME"),
+		os.Getenv("LBXD_PASSWORD"),
+		os.Getenv("LBXD_CLIENT_ID"),
+		os.Getenv("LBXD_CLIENT_SECRET"),
+	)
+
+	tokens, err := auth.GetAccessTokens("https://api.letterboxd.com/api/v0", lbxd.Client_Id, lbxd.Username, lbxd.Password, lbxd.Client_Secret, lbxd.Client)
+	if err != nil {
+		t.Fatalf("Failed to get tokens: %v", err)
+	}
+
+	err = UploadAsWatchlist("https://letterboxd.com", &http.Client{}, tokens, films)
+	if err != nil {
+		t.Fatalf("Failed to upload: %v", err)
+	}
+}
