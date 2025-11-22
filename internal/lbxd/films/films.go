@@ -88,11 +88,13 @@ func ReadFilmsFromCSV(filepath string) ([]Film, error) {
 		title := record[0]
 		year := record[1]
 		slug := TitleToSlug(title)
+		lid := record[3]
 
 		films = append(films, Film{
 			Title: title,
 			Year:  year,
 			Slug:  slug,
+			LID:   lid,
 		})
 	}
 
